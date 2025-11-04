@@ -37,6 +37,10 @@ impl JobHandler for SendEmailHandler {
     fn execute(&self, job: &Job) -> Result<(), String> {
         println!("[Info]: Sending email for job: {}", &job.id());
 
+        for (key, value) in job.payload() {
+            println!("{key}: {value}");
+        }
+
         thread::sleep(Duration::from_secs(1));
 
         println!("[Info]: Done Sending email for job: {} \n", &job.id());
@@ -51,8 +55,12 @@ impl JobHandler for NotificationHandler {
     fn execute(&self, job: &Job) -> Result<(), String> {
         println!("[Info]: Sending notification for job: {}", &job.id());
 
-        if *job.priority() == Priority::Low {
+        if !job.payload().contains_key("fcm_token") {
             return Err("Fcm token not found".into());
+        }
+
+        for (key, value) in job.payload() {
+            println!("{key}: {value}");
         }
 
         thread::sleep(Duration::from_secs(2));

@@ -1,4 +1,4 @@
-// use std::collections::HashMap;
+use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
 
@@ -12,7 +12,7 @@ pub enum Priority {
 pub struct Job {
     id: uuid::Uuid,
     job_type: String,
-    // payload: HashMap<String, T>,
+    payload: HashMap<String, String>,
     priority: Priority,
     retry_count: u8,
     max_retries: u8,
@@ -20,11 +20,12 @@ pub struct Job {
 }
 
 impl Job {
-    pub fn new(job_type: String, priority: Priority) -> Self {
+    pub fn new(job_type: String, priority: Priority, payload: HashMap<String, String>) -> Self {
         Self {
             id: uuid::Uuid::new_v4(),
             job_type,
             priority,
+            payload,
             retry_count: 0,
             max_retries: 2,
             created_at: Utc::now(),
@@ -53,5 +54,9 @@ impl Job {
 
     pub fn priority(&self) -> &Priority {
         &self.priority
+    }
+
+    pub fn payload(&self) -> &HashMap<String, String> {
+        &self.payload
     }
 }

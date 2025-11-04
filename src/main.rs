@@ -2,9 +2,11 @@ mod handler;
 mod job;
 mod queue;
 mod scheduler;
+mod utils;
 mod worker;
 
 use std::{
+    collections::HashMap,
     sync::{Arc, Mutex},
     thread,
     time::Duration,
@@ -18,22 +20,28 @@ use queue::{JobQueue, Queue};
 use scheduler::Scheduler;
 use worker::{Consumer, Worker};
 
+use crate::utils::helper::{create_email_payload, create_notification_payload};
+
 fn main() {
     // creates jobs
-    let job = Job::new("send_email".into(), Priority::High);
+
+    let mut analytics_payload = HashMap::new();
+    analytics_payload.insert("metadata".into(), "some data".into());
+
     let jobs = vec![
-        Job::new("compute_analytics".into(), Priority::High),
-        // Job::new("send_reminders".into(), Priority::Low),
-        // Job::new("fix_bug".into(), Priority::High),
-        // Job::new("another job".into(), Priority::High),
-        // Job::new("some_job".into(), Priority::Low),
-        // Job::new("ok_job".into(), Priority::Low),
+        Job::new(
+            "send_email".into(),
+            Priority::High,
+            create_email_payload("test@gamil.com", "Hi there", "Welcome message"),
+        ),
+        Job::new(
+            "compute_analytics".into(),
+            Priority::High,
+            analytics_payload,
+        ),
     ];
 
     let queue = Arc::new(Mutex::new(Queue::new()));
-
-    // queue jobs
-    queue.lock().unwrap().enqueue(job);
 
     for j in jobs {
         queue.lock().unwrap().enqueue(j);
@@ -43,8 +51,20 @@ fn main() {
         // schedule jobs
         let mut scheduler = Scheduler::new(queue.clone());
 
-        let scheduled_job = Job::new("send_notification".into(), Priority::Low);
-        let scheduled_job_two = Job::new("send_notification".into(), Priority::High);
+        let scheduled_job = Job::new(
+            "send_notification".into(),
+            Priority::Low,
+            create_notification_payload(
+                "You have a new follower",
+                "New Follow",
+                Some("some token"),
+            ),
+        );
+        let scheduled_job_two = Job::new(
+            "send_notification".into(),
+            Priority::High,
+            create_notification_payload("You have a new follower", "New Follow", None),
+        );
 
         scheduler.add(scheduled_job, Utc::now() + Duration::from_secs(10));
         scheduler.add(scheduled_job_two, Utc::now() + Duration::from_secs(3));
