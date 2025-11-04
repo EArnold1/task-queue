@@ -2,13 +2,13 @@
 
 use chrono::{DateTime, Utc};
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Priority {
     High,
     Low,
 }
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Job {
     id: uuid::Uuid,
     job_type: String,
@@ -16,7 +16,7 @@ pub struct Job {
     priority: Priority,
     retry_count: u8,
     max_retries: u8,
-    pub created_at: DateTime<Utc>,
+    created_at: DateTime<Utc>,
 }
 
 impl Job {

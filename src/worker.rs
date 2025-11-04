@@ -4,9 +4,9 @@ use std::{
     time::Duration,
 };
 
-use crate::queue::{Queue, QueueTrait};
+use crate::queue::{JobQueue, Queue};
 
-pub trait WorkerTrait {
+pub trait Consumer {
     fn start(&mut self) {}
 }
 
@@ -21,17 +21,20 @@ impl Worker {
     }
 }
 
-impl WorkerTrait for Worker {
+impl Consumer for Worker {
+    /// start worker (polling queues)
     fn start(&mut self) {
         loop {
             if let Some(job) = self.queue.lock().unwrap().dequeue() {
                 println!("Worker {} got a job; executing.", self.id);
 
-                println!("Job: {:?}", job);
-            }
+                // execute job
+                // implement retries
 
-            thread::sleep(Duration::from_secs(1));
+                println!("Job: {:?}", job);
+            } else {
+                thread::sleep(Duration::from_secs(1));
+            }
         }
-        // start worker (polling queues)
     }
 }

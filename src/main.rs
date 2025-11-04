@@ -7,9 +7,9 @@ use std::{
 use chrono::Utc;
 use job::{Job, Priority};
 
-use queue::{Queue, QueueTrait};
+use queue::{JobQueue, Queue};
 use scheduler::Scheduler;
-use worker::{Worker, WorkerTrait};
+use worker::{Consumer, Worker};
 
 mod job;
 mod queue;
@@ -20,7 +20,6 @@ fn main() {
     // creates jobs
     let job = Job::new("send_email".into(), Priority::High);
     let jobs = vec![
-        Job::new("send_email".into(), Priority::High),
         Job::new("compute_analytics".into(), Priority::High),
         Job::new("send_reminders".into(), Priority::Low),
         Job::new("fix_bug".into(), Priority::High),
@@ -43,8 +42,10 @@ fn main() {
         let mut scheduler = Scheduler::new(queue.clone());
 
         let scheduled_job = Job::new("send_notification".into(), Priority::Low);
+        let scheduled_job_two = Job::new("send_notification 2".into(), Priority::Low);
 
         scheduler.add(scheduled_job, Utc::now() + Duration::from_secs(10));
+        scheduler.add(scheduled_job_two, Utc::now() + Duration::from_secs(3));
 
         thread::spawn(move || {
             scheduler.run();

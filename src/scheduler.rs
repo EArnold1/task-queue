@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     collections::BinaryHeap,
     sync::{Arc, Mutex},
     thread,
@@ -9,19 +10,33 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     job::Job,
-    queue::{Queue, QueueTrait},
+    queue::{JobQueue, Queue},
 };
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, PartialEq, Eq)]
 struct ScheduledJob {
     job: Job,
     scheduled_at: DateTime<Utc>,
 }
 
-// implement Ord(compare time)
+impl Ord for ScheduledJob {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        // the lower the scheduled_at time, the greater the importance
+        match (self, other) {
+            (s, o) if s.scheduled_at < o.scheduled_at => Ordering::Greater,
+            (s, o) if s.scheduled_at > o.scheduled_at => Ordering::Less,
+            _ => Ordering::Equal,
+        }
+    }
+}
+
+impl PartialOrd for ScheduledJob {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
 
 pub struct Scheduler {
-    // alternatively we can implement a heap data structure
     jobs: BinaryHeap<ScheduledJob>,
     queue: Arc<Mutex<Queue>>,
 }
