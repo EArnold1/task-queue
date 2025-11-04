@@ -14,8 +14,8 @@ pub struct Job {
     job_type: String,
     // payload: HashMap<String, T>,
     priority: Priority,
-    pub retry_count: u8,
-    pub max_retries: u8,
+    retry_count: u8,
+    max_retries: u8,
     created_at: DateTime<Utc>,
 }
 
@@ -37,5 +37,21 @@ impl Job {
 
     pub fn job_type(&self) -> &str {
         &self.job_type
+    }
+
+    pub fn retry_count(&self) -> u8 {
+        self.retry_count
+    }
+
+    pub fn update_retry_count(&mut self) {
+        self.retry_count += 1;
+    }
+
+    pub fn max_retries(&mut self) -> u8 {
+        self.max_retries
+    }
+
+    pub fn priority(&self) -> &Priority {
+        &self.priority
     }
 }

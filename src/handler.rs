@@ -1,49 +1,67 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-    thread,
-    time::Duration,
-};
+use std::{collections::HashMap, sync::Arc, thread, time::Duration};
 
-use crate::job::Job;
+use crate::job::{Job, Priority};
 
 pub trait JobHandler: Send + Sync {
-    fn execute(&self, job: &Job);
+    fn execute(&self, job: &Job) -> Result<(), String>;
 }
 
 pub struct JobRegistry {
-    handlers: Arc<Mutex<HashMap<String, Arc<dyn JobHandler>>>>,
+    // trait object
+    handlers: HashMap<String, Arc<dyn JobHandler>>,
 }
 
 impl JobRegistry {
     pub fn new() -> Self {
         Self {
-            handlers: Arc::new(Mutex::new(HashMap::new())),
+            handlers: HashMap::new(),
         }
     }
 
-    pub fn register_handler(&self, name: &str, handler: Arc<dyn JobHandler>) {
-        self.handlers.lock().unwrap().insert(name.into(), handler);
+    pub fn register_handler(&mut self, name: &str, handler: Arc<dyn JobHandler>) {
+        self.handlers.insert(name.into(), handler);
     }
 
-    pub fn execute(&self, job: &Job) -> Option<()> {
-        if let Some(handler) = self.handlers.lock().unwrap().get(job.job_type()) {
-            handler.execute(job);
-            return Some(());
+    pub fn execute(&mut self, job: &Job) -> Result<(), String> {
+        if let Some(handler) = self.handlers.get(job.job_type()) {
+            handler.execute(job)
+        } else {
+            Err("No handler found".into())
         }
-
-        None
     }
 }
 
 pub struct SendEmailHandler;
 
 impl JobHandler for SendEmailHandler {
-    fn execute(&self, job: &Job) {
+    fn execute(&self, job: &Job) -> Result<(), String> {
         println!("[Info]: Sending email for job: {}", &job.id());
 
         thread::sleep(Duration::from_secs(1));
 
-        println!("[Info]: Done Sending email for job: {}", &job.id());
+        println!("[Info]: Done Sending email for job: {} \n", &job.id());
+
+        Ok(())
+    }
+}
+
+pub struct NotificationHandler;
+
+impl JobHandler for NotificationHandler {
+    fn execute(&self, job: &Job) -> Result<(), String> {
+        println!("[Info]: Sending notification for job: {}", &job.id());
+
+        if *job.priority() == Priority::Low {
+            return Err("Fcm token not found".into());
+        }
+
+        thread::sleep(Duration::from_secs(2));
+
+        println!(
+            "[Info]: Done Sending notification for job: {} \n",
+            &job.id()
+        );
+
+        Ok(())
     }
 }

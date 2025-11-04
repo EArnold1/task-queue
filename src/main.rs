@@ -1,3 +1,9 @@
+mod handler;
+mod job;
+mod queue;
+mod scheduler;
+mod worker;
+
 use std::{
     sync::{Arc, Mutex},
     thread,
@@ -7,16 +13,10 @@ use std::{
 use chrono::Utc;
 use job::{Job, Priority};
 
-use handler::{JobRegistry, SendEmailHandler};
+use handler::{JobRegistry, NotificationHandler, SendEmailHandler};
 use queue::{JobQueue, Queue};
 use scheduler::Scheduler;
 use worker::{Consumer, Worker};
-
-mod handler;
-mod job;
-mod queue;
-mod scheduler;
-mod worker;
 
 fn main() {
     // creates jobs
@@ -44,7 +44,7 @@ fn main() {
         let mut scheduler = Scheduler::new(queue.clone());
 
         let scheduled_job = Job::new("send_notification".into(), Priority::Low);
-        let scheduled_job_two = Job::new("send_notification".into(), Priority::Low);
+        let scheduled_job_two = Job::new("send_notification".into(), Priority::High);
 
         scheduler.add(scheduled_job, Utc::now() + Duration::from_secs(10));
         scheduler.add(scheduled_job_two, Utc::now() + Duration::from_secs(3));
@@ -56,11 +56,12 @@ fn main() {
 
     // Create a job registry and register handlers.
     let registry = Arc::new(Mutex::new(JobRegistry::new()));
+    let mut registry_lock = registry.lock().unwrap();
 
-    registry
-        .lock()
-        .unwrap()
-        .register_handler("send_email", Arc::new(SendEmailHandler));
+    registry_lock.register_handler("send_email", Arc::new(SendEmailHandler));
+    registry_lock.register_handler("send_notification", Arc::new(NotificationHandler));
+
+    drop(registry_lock);
 
     let mut workers = Vec::new();
 
@@ -79,4 +80,8 @@ fn main() {
     for worker in workers {
         worker.join().unwrap();
     }
+
+    // for d in queue.clone().lock().unwrap().list_dlq() {
+    //     println!("[DLQ]: reason {}, job_id: {:?}", d.reason, d.job.id());
+    // }
 }

@@ -12,7 +12,7 @@ use crate::{
 type SharedMut<T> = Arc<Mutex<T>>;
 
 pub trait Consumer {
-    fn start(&mut self) {}
+    fn start(&mut self);
 }
 
 pub struct Worker {
@@ -37,24 +37,48 @@ impl Consumer for Worker {
         let base = Duration::from_secs(1);
         loop {
             if let Some(mut job) = self.queue.lock().unwrap().dequeue() {
-                println!("Worker {} got a job; executing.", self.id);
+                println!(
+                    "Worker {} got a job; executing job: {}. \n",
+                    self.id,
+                    job.id()
+                );
 
                 // execute job
                 // NOTE: long running jobs can block
-                if self.job_registry.lock().unwrap().execute(&job).is_none() {
-                    if job.retry_count >= job.max_retries {
-                        // push to dead letter queue
-                        //
-                        println!("dead letter: {:?}", job);
+
+                let retry_count = job.retry_count();
+                let max_retries = job.max_retries();
+                if let Err(reason) = self.job_registry.lock().unwrap().execute(&job) {
+                    let queue = self.queue.clone();
+
+                    if reason == "No handler found" {
+                        println!("pushed job: {} to dead letter queue: \n", job.id());
+
+                        thread::spawn(move || {
+                            queue.lock().unwrap().push_to_dlq(reason, job);
+                        });
+
                         continue;
                     }
 
-                    println!("Retrying job: {}", &job.id());
-                    job.retry_count += 1;
+                    if retry_count >= max_retries {
+                        // push to dead letter queue
+                        println!("pushed job: {} to dead letter queue: \n", job.id());
+
+                        thread::spawn(move || {
+                            queue.lock().unwrap().push_to_dlq(reason, job);
+                        });
+
+                        continue;
+                    }
+
+                    println!("Retrying job: {} \n", &job.id());
+
+                    job.update_retry_count();
+
                     // exponential backoff
-                    //
-                    let delay = base * (2_u32.pow(job.retry_count as u32));
-                    let queue = self.queue.clone();
+                    let delay = base * (2_u32.pow(retry_count as u32));
+
                     thread::spawn(move || {
                         thread::sleep(delay);
                         queue.lock().unwrap().enqueue(job);
