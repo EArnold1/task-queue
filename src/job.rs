@@ -1,8 +1,8 @@
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 use chrono::{DateTime, Utc};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Priority {
     High,
     Low,
@@ -17,6 +17,18 @@ pub struct Job {
     retry_count: u8,
     max_retries: u8,
     created_at: DateTime<Utc>,
+}
+
+impl Ord for Job {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.priority.cmp(&self.priority)
+    }
+}
+
+impl PartialOrd for Job {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Job {

@@ -44,23 +44,24 @@ impl Queue {
         }
     }
 
-    pub fn list_dlq(&self) -> &Vec<DeadLetterQ> {
+    pub fn get_dlq(&self) -> &Vec<DeadLetterQ> {
         &self.dead_letter_queue
     }
 }
 
 impl JobQueue for Queue {
+    /// add to queue
     fn enqueue(&mut self, job: Job) {
-        // add to queue
-        // TODO: sort by priority
+        self.queue.make_contiguous().sort();
         self.queue.push_front(job);
     }
 
+    /// remove from queue
     fn dequeue(&mut self) -> Option<Job> {
-        // remove from queue
         self.queue.pop_front()
     }
 
+    /// push to dead letter queue
     fn push_to_dlq(&mut self, reason: String, job: Job) {
         self.dead_letter_queue.push(DeadLetterQ { reason, job });
     }

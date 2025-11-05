@@ -24,15 +24,14 @@ use worker::{Consumer, Worker};
 use crate::utils::helper::{create_email_payload, create_notification_payload};
 
 fn main() {
-    // creates jobs
-
     let mut analytics_payload = HashMap::new();
     analytics_payload.insert("metadata".into(), "some data".into());
 
+    // creates jobs
     let jobs = vec![
         Job::new(
             "send_email".into(),
-            Priority::High,
+            Priority::Low,
             create_email_payload("test@gamil.com", "Hi there", "Welcome message"),
         ),
         Job::new(
