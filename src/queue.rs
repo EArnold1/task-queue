@@ -3,6 +3,10 @@ use std::collections::VecDeque;
 use crate::job::Job;
 
 pub trait JobQueue {
+    fn queue_len(&mut self) -> usize;
+
+    fn dlq_len(&mut self) -> usize;
+
     fn enqueue(&mut self, job: Job);
 
     fn dequeue(&mut self) -> Option<Job>;
@@ -50,6 +54,14 @@ impl Queue {
 }
 
 impl JobQueue for Queue {
+    fn queue_len(&mut self) -> usize {
+        self.queue.len()
+    }
+
+    fn dlq_len(&mut self) -> usize {
+        self.dead_letter_queue.len()
+    }
+
     /// add to queue
     fn enqueue(&mut self, job: Job) {
         self.queue.make_contiguous().sort();
