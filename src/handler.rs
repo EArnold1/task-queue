@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc, thread, time::Duration};
 
-use crate::job::{Job, Priority};
+use crate::job::Job;
 
 pub trait JobHandler: Send + Sync {
     fn execute(&self, job: &Job) -> Result<(), String>;

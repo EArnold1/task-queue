@@ -9,6 +9,8 @@ pub trait JobQueue {
 
     fn push_to_dlq(&mut self, reason: String, job: Job);
 
+    fn pop_dlq(&mut self) -> Option<&DeadLetterQ>;
+
     // Inside a DLQ, the following can be implemented
     /*
      * 1. Retries
@@ -61,5 +63,10 @@ impl JobQueue for Queue {
 
     fn push_to_dlq(&mut self, reason: String, job: Job) {
         self.dead_letter_queue.push(DeadLetterQ { reason, job });
+    }
+
+    /// returns the last job inserted into the dlq
+    fn pop_dlq(&mut self) -> Option<&DeadLetterQ> {
+        self.dead_letter_queue.first()
     }
 }

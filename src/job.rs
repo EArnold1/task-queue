@@ -52,10 +52,6 @@ impl Job {
         self.max_retries
     }
 
-    pub fn priority(&self) -> &Priority {
-        &self.priority
-    }
-
     pub fn payload(&self) -> &HashMap<String, String> {
         &self.payload
     }

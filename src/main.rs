@@ -2,6 +2,7 @@ mod handler;
 mod job;
 mod queue;
 mod scheduler;
+mod tests;
 mod utils;
 mod worker;
 
